@@ -1,17 +1,20 @@
-﻿//A* Search Pathfinding Example from : https://dotnetcoretutorials.com/2020/07/25/a-search-pathfinding-algorithm-in-c/ 
+﻿//A* Search Pathfinding Example from : https://dotnetcoretutorials.com/2020/07/25/a-search-pathfinding-algorithm-in-c/
 using aStarConsole;
+using aStarConsole.HelperClass;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Diagnostics.Metrics;
 
 internal class Program
 {
     private static List<Tile> GetWalkableTiles(List<string> map, Tile currentTile, Tile targetTile)
     {
         var possibleTiles = new List<Tile>()
-            {
+        {
                 new Tile { X = currentTile.X, Y = currentTile.Y - 1, Parent = currentTile, Cost = currentTile.Cost + 1 },
                 new Tile { X = currentTile.X, Y = currentTile.Y + 1, Parent = currentTile, Cost = currentTile.Cost + 1},
                 new Tile { X = currentTile.X - 1, Y = currentTile.Y, Parent = currentTile, Cost = currentTile.Cost + 1 },
                 new Tile { X = currentTile.X + 1, Y = currentTile.Y, Parent = currentTile, Cost = currentTile.Cost + 1 },
-            };
+        };
 
         possibleTiles.ForEach(tile => tile.SetDistance(targetTile.X, targetTile.Y));
 
@@ -24,16 +27,18 @@ internal class Program
                 .Where(tile => map[tile.Y][tile.X] == ' ' || map[tile.Y][tile.X] == 'B')
                 .ToList();
     }
+
     private static void Main(string[] args)
     {
+        float totalMeters = 0;
         List<string> map = new()
             {
-                "       |      ",
+                "       |    B",
                 " | | | | | | ",
-                " | | | |-| | ",
-                "A| | |-| | | ",
+                " | | |A|-| | ",
+                " | | |-| | | ",
                 "-| | | | | | ",
-                " | | | |B| | ",
+                " | | | | | | ",
                 "             ",
             };
 
@@ -42,7 +47,6 @@ internal class Program
             Y = map.FindIndex(x => x.Contains('A'))
         };
         start.X = map[start.Y].IndexOf("A");
-
 
         var finish = new Tile
         {
@@ -54,7 +58,7 @@ internal class Program
 
         var activeTiles = new List<Tile>
         {
-                start
+            start
         };
         var visitedTiles = new List<Tile>();
 
@@ -65,24 +69,27 @@ internal class Program
             if (checkTile.X == finish.X && checkTile.Y == finish.Y)
             {
                 //We found the destination and we can be sure (Because the the OrderBy above)
-                //That it's the most low cost option. 
+                //That it's the most low cost option.
                 var tile = checkTile;
                 Console.WriteLine("Retracing steps backwards...");
                 while (true)
                 {
-                    Console.WriteLine($"{tile.X} : {tile.Y}");
                     if (map[tile.Y][tile.X] == ' ')
                     {
                         var newMapRow = map[tile.Y].ToCharArray();
                         newMapRow[tile.X] = '*';
+                        totalMeters += 1.25f;
                         map[tile.Y] = new string(newMapRow);
                     }
                     tile = tile.Parent;
                     if (tile == null)
                     {
+                        //Many people tend to walk at about 1.42 metres per second
                         Console.WriteLine("Map looks like :");
                         map.ForEach(Console.WriteLine);
                         Console.WriteLine("Done!");
+                        float miles = ConversionHelper.ConvertMetersToMiles(totalMeters);
+                        Console.WriteLine($"{miles} and {totalMeters}");
                         return;
                     }
                 }
@@ -99,7 +106,7 @@ internal class Program
                 if (visitedTiles.Any(x => x.X == walkableTile.X && x.Y == walkableTile.Y))
                     continue;
 
-                //It's already in the active list, but that's OK, maybe this new tile has a better value (e.g. We might zigzag earlier but this is now straighter). 
+                //It's already in the active list, but that's OK, maybe this new tile has a better value (e.g. We might zigzag earlier but this is now straighter).
                 if (activeTiles.Any(x => x.X == walkableTile.X && x.Y == walkableTile.Y))
                 {
                     var existingTile = activeTiles.First(x => x.X == walkableTile.X && x.Y == walkableTile.Y);
@@ -111,14 +118,12 @@ internal class Program
                 }
                 else
                 {
-                    //We've never seen this tile before so add it to the list. 
+                    //We've never seen this tile before so add it to the list.
                     activeTiles.Add(walkableTile);
                 }
             }
         }
 
         Console.WriteLine("No Path Found!");
-
-       
     }
 }
