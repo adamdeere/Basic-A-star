@@ -1,6 +1,7 @@
 ﻿//A* Search Pathfinding Example from : https://dotnetcoretutorials.com/2020/07/25/a-search-pathfinding-algorithm-in-c/
 using aStarConsole;
 using aStarConsole.HelperClass;
+using Newtonsoft.Json;
 
 internal class Program
 {
@@ -27,17 +28,6 @@ internal class Program
 
 
         return possibleTiles;
-    }
-
-    private static void AddTile(List<Tile> nextTiles, List<Tile> previous, Tile currentTile)
-    {
-        foreach (var tile in previous) 
-        {
-            tile.Parent = currentTile;
-            tile.Cost = currentTile.Cost + 1;
-
-            nextTiles.Add(tile);
-        }
     }
     private static List<Tile> GetTile(List<Tile> map2, Tile currentTile)
     {
@@ -86,6 +76,7 @@ internal class Program
         float totalMeters = 0;
         List<string> map = new();
         List<Tile> tileList = new();
+        List<MapTile> mapTileList = new();
         using (StreamReader sr = new ("Maps/map.txt"))
         {
             while (sr.Peek() != -1)
@@ -130,10 +121,23 @@ internal class Program
                     IsFinish = finishing,
                     Walkable = walkable
                 };
+                var mapTile = new MapTile()
+                {
+                    X = x,
+                    Y = y,
+                    IsStart = starting,
+                    IsFinish = finishing,
+                    Walkable = walkable
+                };
+                mapTileList.Add(mapTile);
                 tileList.Add(tile);
             }
         }
-
+        string output = JsonConvert.SerializeObject(mapTileList);
+        using (StreamWriter sw = new("Maps/mapJson.json"))
+        {
+            sw.WriteLine(output);
+        }
         var startingTile  = tileList.Where(x => x.IsStart).First();
         var finishingTile = tileList.Where(x => x.IsFinish).First();
         
@@ -144,7 +148,8 @@ internal class Program
             startingTile
         };
         var visitedTiles = new List<Tile>();
-         
+        Console.WriteLine("calculating route");
+        bool startFound = false;
         while (activeTiles.Any())
         {
             var checkTile = activeTiles.OrderBy(x => x.CostDistance).First();
@@ -155,7 +160,7 @@ internal class Program
                 //That it's the most low cost option.
                 var tile = checkTile;
                 Console.WriteLine("Retracing steps backwards...");
-                bool startFound = false;
+             
                 while (!startFound)
                 {
                     if (map[tile.Y][tile.X] == ' ')
@@ -183,7 +188,6 @@ internal class Program
             activeTiles.Remove(checkTile);
 
             var walkingTiles = PossibleTiles(tileList, checkTile, finishingTile);
-            //var walkableTiles = GetWalkableTiles(map, checkTile, finishingTile);
 
             foreach (var walkableTile in walkingTiles)
             {
@@ -208,7 +212,10 @@ internal class Program
                 }
             }
         }
+        if (!startFound)
+        {
+            Console.WriteLine("No Path Found!");
+        }
        
-        Console.WriteLine("No Path Found!");
     }
 }
