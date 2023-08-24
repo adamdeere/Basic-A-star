@@ -1,14 +1,12 @@
 ﻿//A* Search Pathfinding Example from : https://dotnetcoretutorials.com/2020/07/25/a-search-pathfinding-algorithm-in-c/
 using aStarConsole;
 using aStarConsole.HelperClass;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Diagnostics.Metrics;
 
 internal class Program
 {
     private static List<Tile> GetWalkableTiles(List<string> map, Tile currentTile, Tile targetTile)
     {
-        var possibleTiles = new List<Tile>()
+        var surroundingTiles = new List<Tile>()
         {
                 new Tile { X = currentTile.X, Y = currentTile.Y - 1, Parent = currentTile, Cost = currentTile.Cost + 1 },
                 new Tile { X = currentTile.X, Y = currentTile.Y + 1, Parent = currentTile, Cost = currentTile.Cost + 1},
@@ -16,63 +14,149 @@ internal class Program
                 new Tile { X = currentTile.X + 1, Y = currentTile.Y, Parent = currentTile, Cost = currentTile.Cost + 1 },
         };
 
+        var maxX = 24;
+        var maxY = map.Count - 1; // 11
+
+        var possibleTiles = surroundingTiles
+               .Where(tile => tile.X >= 0 && tile.X <= maxX)
+               .Where(tile => tile.Y >= 0 && tile.Y <= maxY)
+               .Where(tile => map[tile.Y][tile.X] == ' ' || map[tile.Y][tile.X] == 'B')
+               .ToList();
+
         possibleTiles.ForEach(tile => tile.SetDistance(targetTile.X, targetTile.Y));
 
-        var maxX = map.First().Length - 1;
-        var maxY = map.Count - 1;
 
-        return possibleTiles
-                .Where(tile => tile.X >= 0 && tile.X <= maxX)
-                .Where(tile => tile.Y >= 0 && tile.Y <= maxY)
-                .Where(tile => map[tile.Y][tile.X] == ' ' || map[tile.Y][tile.X] == 'B')
-                .ToList();
+        return possibleTiles;
     }
 
+    private static void AddTile(List<Tile> nextTiles, List<Tile> previous, Tile currentTile)
+    {
+        foreach (var tile in previous) 
+        {
+            tile.Parent = currentTile;
+            tile.Cost = currentTile.Cost + 1;
+
+            nextTiles.Add(tile);
+        }
+    }
+    private static List<Tile> GetTile(List<Tile> map2, Tile currentTile)
+    {
+        var surroundingTiles = new List<Tile>()
+        {
+                new Tile { X = currentTile.X, Y = currentTile.Y - 1, Parent = currentTile, Cost = currentTile.Cost + 1 },
+                new Tile { X = currentTile.X, Y = currentTile.Y + 1, Parent = currentTile, Cost = currentTile.Cost + 1},
+                new Tile { X = currentTile.X - 1, Y = currentTile.Y, Parent = currentTile, Cost = currentTile.Cost + 1 },
+                new Tile { X = currentTile.X + 1, Y = currentTile.Y, Parent = currentTile, Cost = currentTile.Cost + 1 },
+        };
+
+        foreach (var tile in surroundingTiles)
+        {
+            var mapTile = map2
+                .Where(tiled => tiled.X == tile.X)
+                .Where(tiled => tiled.Y == tile.Y)
+                .FirstOrDefault();
+            if (mapTile != null)
+            {
+                tile.Walkable = mapTile.Walkable;
+                tile.IsFinish = mapTile.IsFinish;
+                tile.IsStart = mapTile.IsStart; 
+            }
+           
+
+        }
+        return surroundingTiles;
+
+    }
+    private static List<Tile> PossibleTiles(List<Tile> map2, Tile currentTile, Tile targetTile)
+    {
+
+        var possibleTiles = GetTile(map2, currentTile);
+
+        var lolTiles = possibleTiles
+               .Where(tile => tile.Walkable || tile.IsFinish)
+               .ToList();
+
+        lolTiles.ForEach(tile => tile.SetDistance(targetTile.X, targetTile.Y));
+
+
+        return lolTiles;
+    }
     private static void Main(string[] args)
     {
         float totalMeters = 0;
-        List<string> map = new()
+        List<string> map = new();
+        List<Tile> tileList = new();
+        using (StreamReader sr = new ("Maps/map.txt"))
+        {
+            while (sr.Peek() != -1)
             {
-                "       |    B",
-                " | | | | | | ",
-                " | | |A|-| | ",
-                " | | |-| | | ",
-                "-| | | | | | ",
-                " | | | | | | ",
-                "             ",
-            };
-
-        var start = new Tile
+               map.Add(sr.ReadLine());
+            }
+        }
+        for (int y = 0; y < map.Count; y++)
         {
-            Y = map.FindIndex(x => x.Contains('A'))
-        };
-        start.X = map[start.Y].IndexOf("A");
+            char[] chars = map[y].ToCharArray();
 
-        var finish = new Tile
-        {
-            Y = map.FindIndex(x => x.Contains('B'))
-        };
-        finish.X = map[finish.Y].IndexOf("B");
+            for (int x = 0; x < chars.Length; x++)
+            {
+                bool walkable = false;
+                bool starting = false;
+                bool finishing = false;
 
-        start.SetDistance(finish.X, finish.Y);
+                switch (chars[x])
+                {
+                    case ' ':
+                        walkable = true;
+                        break;
+
+                    case 'A':
+                        starting = true;
+                        break;
+
+                    case 'B':
+                        finishing = true;
+                        break;
+
+                    default:
+                        walkable = false;
+                        break;
+                }
+
+                var tile = new Tile()
+                {
+                    X = x,
+                    Y = y,
+                    IsStart = starting,
+                    IsFinish = finishing,
+                    Walkable = walkable
+                };
+                tileList.Add(tile);
+            }
+        }
+
+        var startingTile  = tileList.Where(x => x.IsStart).First();
+        var finishingTile = tileList.Where(x => x.IsFinish).First();
+        
+        startingTile.SetDistance(finishingTile.X, finishingTile.Y);
 
         var activeTiles = new List<Tile>
         {
-            start
+            startingTile
         };
         var visitedTiles = new List<Tile>();
-
+         
         while (activeTiles.Any())
         {
             var checkTile = activeTiles.OrderBy(x => x.CostDistance).First();
 
-            if (checkTile.X == finish.X && checkTile.Y == finish.Y)
+            if (checkTile.X == finishingTile.X && checkTile.Y == finishingTile.Y)
             {
                 //We found the destination and we can be sure (Because the the OrderBy above)
                 //That it's the most low cost option.
                 var tile = checkTile;
                 Console.WriteLine("Retracing steps backwards...");
-                while (true)
+                bool startFound = false;
+                while (!startFound)
                 {
                     if (map[tile.Y][tile.X] == ' ')
                     {
@@ -88,9 +172,9 @@ internal class Program
                         Console.WriteLine("Map looks like :");
                         map.ForEach(Console.WriteLine);
                         Console.WriteLine("Done!");
-                        float miles = ConversionHelper.ConvertMetersToMiles(totalMeters);
-                        Console.WriteLine($"{miles} and {totalMeters}");
-                        return;
+                        Console.WriteLine($"Total meters to walk: {totalMeters}");
+                        Console.WriteLine($"ETA to destination: {totalMeters / 1.42f} seconds");
+                        startFound = true;
                     }
                 }
             }
@@ -98,9 +182,10 @@ internal class Program
             visitedTiles.Add(checkTile);
             activeTiles.Remove(checkTile);
 
-            var walkableTiles = GetWalkableTiles(map, checkTile, finish);
+            var walkingTiles = PossibleTiles(tileList, checkTile, finishingTile);
+            //var walkableTiles = GetWalkableTiles(map, checkTile, finishingTile);
 
-            foreach (var walkableTile in walkableTiles)
+            foreach (var walkableTile in walkingTiles)
             {
                 //We have already visited this tile so we don't need to do so again!
                 if (visitedTiles.Any(x => x.X == walkableTile.X && x.Y == walkableTile.Y))
@@ -123,7 +208,7 @@ internal class Program
                 }
             }
         }
-
+       
         Console.WriteLine("No Path Found!");
     }
 }
