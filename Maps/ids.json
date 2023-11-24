@@ -1,0 +1,41 @@
+{
+  "requestId": "202308293756398842",
+  "application": {
+    "id": "yspssiw6-c6v0-3bge-mwm0-8cgdi1ime5aa",
+    "clientId": "q6kjyyw0-f54s-35ea-oqiv-9fsceu24i1si",
+    "name": "IMS",
+    "description": "Integer Micro Systems Ltd",
+    "enabled": true,
+    "createdOn": "2023-08-29T10:26:04.190",
+    "roles": [
+      {
+        "applicationId": "yspssiw6-c6v0-3bge-mwm0-8cgdi1ime5aa",
+        "roleId": "20u1s286-e5pu-31ja-eie1-3fmdfbzgeaae",
+        "role": {
+          "id": "20u1s286-e5pu-31ja-eie1-3fmdfbzgeaae",
+          "name": "IdentityAdmin"
+        }
+      },
+      {
+        "applicationId": "yspssiw6-c6v0-3bge-mwm0-8cgdi1ime5aa",
+        "roleId": "689jyews-g0j4-46gu-g4aq-8i4igmjqib1z",
+        "role": {
+          "id": "689jyews-g0j4-46gu-g4aq-8i4igmjqib1z",
+          "name": "ApplicationAdmin"
+        }
+      },
+      {
+        "applicationId": "yspssiw6-c6v0-3bge-mwm0-8cgdi1ime5aa",
+        "roleId": "qyzay6y4-j6m4-6qii-cje6-1egc6mwgym1y",
+        "role": {
+          "id": "qyzay6y4-j6m4-6qii-cje6-1egc6mwgym1y",
+          "name": "SuperAdmin"
+        }
+      }
+    ]
+  },
+  "secret": "qsp146wudqvu10eukxav9bmdg1jq4fjm",
+  "code": 200,
+  "status": "Ok",
+  "requestUrl": "http://localhost:8830/PlatinumIdentityAPI/rest/PlatinumIdentityAPI/Setup/FirstRun"
+}
